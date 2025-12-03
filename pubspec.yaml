@@ -5,7 +5,7 @@ publish_to: "none" # Private package
 version: 1.0.0+1
 
 environment:
-  sdk: ">=3.9.0 <4.0.0"
+  sdk: ">=3.6.0 <4.0.0"
   flutter: ">=3.24.0"
 
 dependencies:
@@ -17,7 +17,7 @@ dependencies:
   pdf: ^3.11.0
   printing: ^5.11.0
   path_provider: ^2.0.15
-  share_plus: ^8.2.0
+  share_plus: ^10.1.4   # upgraded to match Flutter 3.38.3 compatibility
 
 dev_dependencies:
   flutter_test:
