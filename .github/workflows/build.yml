@@ -1,62 +1,47 @@
-name: Build and Release APK
+name: Build Flutter APK
 
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: write   # required for uploading releases
+
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '11'
-
-      - name: Install Flutter
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 'stable'
+          flutter-version: '3.24.0'
+          channel: 'stable'
 
-      - name: Cache pub packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.pub-cache
-          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.yaml') }}
+      - name: Flutter clean
+        run: flutter clean
 
-      - name: Flutter pub get
+      - name: Install dependencies
         run: flutter pub get
 
-      - name: Build APK (release)
+      - name: Build release APK
         run: flutter build apk --release
 
-      - name: Upload APK
+      - name: Upload APK to GitHub Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: app-release-apk
+          name: app-release.apk
           path: build/app/outputs/flutter-apk/app-release.apk
 
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Download APK artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: app-release-apk
-          path: ./artifact
       - name: Create GitHub Release
-        id: create_release
         uses: ncipollo/release-action@v1
         with:
-          tag: "v${{ github.run_number }}"
-          name: "Release ${{ github.run_number }}"
-          artifacts: ./artifact/app-release.apk
+          artifacts: build/app/outputs/flutter-apk/app-release.apk
+          tag: v${{ github.run_number }}
+          name: "Build v${{ github.run_number }}"
           draft: false
           prerelease: false
