@@ -1,36 +1,33 @@
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
+android {
+    compileSdk = 34
+
+    defaultConfig {
+        applicationId = "com.example.cv_builder"
+        minSdk = 21
+        targetSdk = 34
+        versionCode = 1
+        versionName = "1.0"
     }
-}
 
-val newBuildDir: Directory =
-    rootProject.layout.buildDirectory
-        .dir("../../build")
-        .get()
-rootProject.layout.buildDirectory.value(newBuildDir)
+    // Fix NDK version required by some plugins
+    ndkVersion = "27.0.12077973"
 
-subprojects {
-    val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
-    project.layout.buildDirectory.value(newSubprojectBuildDir)
-}
-subprojects {
-    project.evaluationDependsOn(":app")
-}
-
-
-subprojects {
-    afterEvaluate { project ->
-        if (project.hasProperty("android")) {
-            android {
-                ndkVersion = "27.0.12077973"
-            }
+    buildTypes {
+        getByName("release") {
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
-}
+    
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
 
-
-tasks.register<Delete>("clean") {
-    delete(rootProject.layout.buildDirectory)
+    kotlinOptions {
+        jvmTarget = "11"
+    }
 }
