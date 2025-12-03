@@ -1,9 +1,8 @@
-name: Build APK
+name: Build Flutter APK
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
@@ -11,34 +10,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the repository
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Step 2: Setup Flutter
-      - name: Setup Flutter
+      - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: latest   # <-- automatically picks latest stable
+          flutter-version: "3.38.3"
           channel: stable
 
-      # Step 3: Install dependencies
-      - name: Install dependencies
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Get dependencies
         run: flutter pub get
 
-      # Step 4: Fix Android NDK Version
-      - name: Fix Android NDK Version
-        run: |
-          mkdir -p android/app
-          grep -q 'ndkVersion' android/app/build.gradle.kts || echo 'android { ndkVersion = "27.0.12077973" }' >> android/app/build.gradle.kts
-
-      # Step 5: Build APK
       - name: Build APK
-        run: flutter build apk --release
+        run: flutter build apk --release --no-tree-shake-icons
 
-      # Step 6: Upload APK artifact
-      - name: Upload APK
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: app-release.apk
+          name: app-release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
