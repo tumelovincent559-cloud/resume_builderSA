@@ -1,47 +1,51 @@
-name: Build Flutter APK
+name: Build & Release Flutter APK
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
-  contents: write   # required for uploading releases
+  contents: write  # REQUIRED for publishing release
 
 jobs:
-  build:
+  build_apk:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      # Checkout source code
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Setup Flutter
+      # Setup Flutter
+      - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
-          channel: 'stable'
+          flutter-version: 'stable'
 
-      - name: Flutter clean
-        run: flutter clean
-
-      - name: Install dependencies
+      # Install dependencies
+      - name: Flutter pub get
         run: flutter pub get
 
-      - name: Build release APK
+      # Build release APK
+      - name: Build APK (release)
         run: flutter build apk --release
 
-      - name: Upload APK to GitHub Artifacts
+      # Upload artifact (APK)
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: app-release.apk
           path: build/app/outputs/flutter-apk/app-release.apk
 
+      # Auto create GitHub Release
       - name: Create GitHub Release
-        uses: ncipollo/release-action@v1
+        id: create_release
+        uses: softprops/action-gh-release@v2
         with:
-          artifacts: build/app/outputs/flutter-apk/app-release.apk
-          tag: v${{ github.run_number }}
-          name: "Build v${{ github.run_number }}"
-          draft: false
-          prerelease: false
+          tag_name: v1.${{ github.run_number }}
+          name: "Release v1.${{ github.run_number }}"
+          files: build/app/outputs/flutter-apk/app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,12 +1,12 @@
-// main.dart
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:printing/printing.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:share_plus/share_plus.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+import 'package:share_plus/share_plus.dart';
 
 void main() {
   runApp(const ResumeApp());
@@ -19,6 +19,7 @@ class ResumeApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Resume Builder',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
       home: const ResumeFormScreen(),
     );
@@ -48,7 +49,6 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> {
   final _educationCtrl = TextEditingController();
 
   String _template = 'Modern';
-
   bool _saving = false;
 
   @override
@@ -67,7 +67,7 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> {
   }
 
   // ---------------------------
-  // Build UI
+  // UI
   // ---------------------------
   @override
   Widget build(BuildContext context) {
@@ -155,7 +155,6 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> {
                     border: border,
                   ),
                 ),
-                const SizedBox(height: 12),
                 _buildField(
                   controller: _summaryCtrl,
                   label: 'Professional Summary (2–4 lines)',
@@ -177,10 +176,7 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> {
                   maxLines: 3,
                 ),
                 const SizedBox(height: 20),
-
-                // Preview card
                 _templatePreview(),
-
                 const SizedBox(height: 20),
                 Row(
                   children: [
@@ -189,9 +185,6 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> {
                         onPressed: _generatePdfAndShare,
                         icon: const Icon(Icons.picture_as_pdf),
                         label: const Text('Export PDF / Share'),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -200,15 +193,10 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> {
                         onPressed: _saveLocally,
                         icon: const Icon(Icons.save),
                         label: const Text('Save Resume'),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
                       ),
                     ),
                   ],
                 ),
-
-                const SizedBox(height: 20),
                 if (_saving)
                   Row(
                     children: const [
@@ -240,8 +228,8 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> {
         keyboardType: keyboard,
         validator: required
             ? (v) => (v == null || v.trim().isEmpty)
-                  ? 'This field is required'
-                  : null
+                ? 'This field is required'
+                : null
             : null,
         decoration: InputDecoration(
           labelText: label,
@@ -252,7 +240,7 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> {
   }
 
   // ---------------------------
-  // Preview widget (upgraded)
+  // PREVIEW CARD
   // ---------------------------
   Widget _templatePreview() {
     Color accent;
@@ -270,21 +258,19 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> {
     final skills = _skillsCtrl.text.isEmpty
         ? ['Communication', 'Teamwork', 'Problem Solving']
         : _skillsCtrl.text
-              .split(',')
-              .map((s) => s.trim())
-              .where((s) => s.isNotEmpty)
-              .toList();
+            .split(',')
+            .map((s) => s.trim())
+            .where((s) => s.isNotEmpty)
+            .toList();
 
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      margin: const EdgeInsets.only(top: 8),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
             Text(
               _fullNameCtrl.text.isEmpty
                   ? 'Your Name'
@@ -295,7 +281,6 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> {
                 color: accent,
               ),
             ),
-            const SizedBox(height: 4),
             Text(
               _titleCtrl.text.isEmpty ? 'Job Title' : _titleCtrl.text.trim(),
               style: TextStyle(fontSize: 14, color: accent.withOpacity(.9)),
@@ -312,7 +297,10 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> {
                         : _phoneCtrl.text.trim(),
                   ),
                 ),
-                const SizedBox(width: 10),
+              ],
+            ),
+            Row(
+              children: [
                 Icon(Icons.email, size: 14, color: accent),
                 const SizedBox(width: 6),
                 Expanded(
@@ -338,8 +326,7 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> {
                 ),
               ],
             ),
-            if (_idCtrl.text.isNotEmpty) ...[
-              const SizedBox(height: 6),
+            if (_idCtrl.text.isNotEmpty)
               Row(
                 children: [
                   Icon(Icons.badge, size: 14, color: accent),
@@ -347,8 +334,7 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> {
                   Text('ID: ${_idCtrl.text.trim()}'),
                 ],
               ),
-            ],
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             _sectionTitle('Summary', accent),
             Text(
               _summaryCtrl.text.isEmpty
@@ -362,15 +348,13 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> {
               runSpacing: 8,
               children: skills.map((s) {
                 return Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
                     color: accent.withOpacity(.08),
                   ),
-                  child: Text(s, style: TextStyle(fontSize: 12, color: accent)),
+                  child: Text(s, style: TextStyle(color: accent)),
                 );
               }).toList(),
             ),
@@ -409,7 +393,7 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> {
   }
 
   // ---------------------------
-  // PDF generation
+  // PDF GENERATOR
   // ---------------------------
   Future<pw.Document> _buildResumePdf() async {
     final doc = pw.Document();
@@ -429,316 +413,175 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> {
     final experience = _experienceCtrl.text.trim();
     final education = _educationCtrl.text.trim();
 
-    // Choose template
     if (_template == 'Minimal') {
-      // Minimal template
       doc.addPage(
         pw.Page(
           pageFormat: PdfPageFormat.a4,
           margin: const pw.EdgeInsets.all(32),
-          build: (context) {
-            return pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Text(
-                  fullName.isEmpty ? 'Your Name' : fullName,
-                  style: pw.TextStyle(
-                    fontSize: 22,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
+          build: (context) => pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text(
+                fullName.isEmpty ? 'Your Name' : fullName,
+                style: pw.TextStyle(
+                  fontSize: 22,
+                  fontWeight: pw.FontWeight.bold,
                 ),
-                pw.SizedBox(height: 4),
-                pw.Text(
-                  title.isEmpty ? 'Job Title' : title,
-                  style: pw.TextStyle(fontSize: 12),
-                ),
-                pw.SizedBox(height: 8),
-                pw.Row(
-                  children: [
-                    pw.Expanded(
-                      child: pw.Text(
-                        'Phone: ${phone.isEmpty ? '+27 00 000 0000' : phone}',
-                      ),
-                    ),
-                    pw.Text(
-                      'Email: ${email.isEmpty ? 'email@example.com' : email}',
-                    ),
-                  ],
-                ),
-                pw.SizedBox(height: 6),
-                if (location.isNotEmpty) pw.Text(location),
-                if (id.isNotEmpty) pw.Text('ID: $id'),
-                pw.Divider(),
-                pw.Text(
-                  'Summary',
-                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                ),
-                pw.SizedBox(height: 4),
-                pw.Text(
-                  summary.isEmpty ? 'Short professional summary...' : summary,
-                ),
-                pw.SizedBox(height: 10),
-                pw.Text(
-                  'Skills',
-                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                ),
-                pw.SizedBox(height: 6),
-                pw.Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: skills.isEmpty
-                      ? [
-                          pw.Container(
-                            padding: const pw.EdgeInsets.all(6),
-                            child: pw.Text('Communication'),
-                          ),
-                        ]
-                      : skills
-                            .map(
-                              (s) => pw.Container(
-                                padding: const pw.EdgeInsets.all(6),
-                                child: pw.Text(s),
-                              ),
-                            )
-                            .toList(),
-                ),
-                pw.SizedBox(height: 10),
-                pw.Text(
-                  'Experience',
-                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                ),
-                pw.SizedBox(height: 6),
-                pw.Text(
-                  experience.isEmpty
-                      ? 'Your jobs, duties, and dates...'
-                      : experience,
-                ),
-                pw.SizedBox(height: 10),
-                pw.Text(
-                  'Education',
-                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                ),
-                pw.SizedBox(height: 6),
-                pw.Text(
-                  education.isEmpty
-                      ? 'Qualifications & institutions...'
-                      : education,
-                ),
-              ],
-            );
-          },
+              ),
+              pw.SizedBox(height: 4),
+              pw.Text(title.isEmpty ? 'Job Title' : title),
+              pw.SizedBox(height: 10),
+              pw.Text('Phone: ${phone.isEmpty ? 'N/A' : phone}'),
+              pw.Text('Email: ${email.isEmpty ? 'email@example.com' : email}'),
+              if (location.isNotEmpty) pw.Text(location),
+              if (id.isNotEmpty) pw.Text('ID: $id'),
+              pw.Divider(),
+              pw.Text(
+                'Summary',
+                style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+              ),
+              pw.Text(summary.isEmpty ? 'Short summary...' : summary),
+              pw.SizedBox(height: 12),
+              pw.Text(
+                'Skills',
+                style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+              ),
+              pw.Wrap(
+                spacing: 6,
+                children: skills
+                    .map((s) => pw.Container(
+                        padding: const pw.EdgeInsets.all(6), child: pw.Text(s)))
+                    .toList(),
+              ),
+              pw.SizedBox(height: 12),
+              pw.Text(
+                'Experience',
+                style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+              ),
+              pw.Text(experience.isEmpty ? 'Experience...' : experience),
+              pw.SizedBox(height: 12),
+              pw.Text(
+                'Education',
+                style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+              ),
+              pw.Text(education.isEmpty ? 'Education...' : education),
+            ],
+          ),
         ),
       );
-    } else if (_template == 'ATS-friendly') {
-      // ATS-friendly (plain layout, easy parse)
+    }
+
+    // ATS Template
+    else if (_template == 'ATS-friendly') {
       doc.addPage(
         pw.Page(
           pageFormat: PdfPageFormat.a4,
-          margin: const pw.EdgeInsets.symmetric(horizontal: 28, vertical: 20),
-          build: (context) {
-            return pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Text(
-                  fullName.isEmpty ? 'Your Name' : fullName,
-                  style: pw.TextStyle(
-                    fontSize: 20,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
+          margin: const pw.EdgeInsets.all(28),
+          build: (context) => pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text(
+                fullName.isEmpty ? 'Your Name' : fullName,
+                style: pw.TextStyle(
+                  fontSize: 20,
+                  fontWeight: pw.FontWeight.bold,
                 ),
-                pw.SizedBox(height: 6),
-                pw.Text(title.isEmpty ? 'Job Title' : title),
-                pw.SizedBox(height: 8),
-                pw.Text(
-                  'Contact',
-                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                ),
-                pw.Bullet(
-                  text: 'Phone: ${phone.isEmpty ? '+27 00 000 0000' : phone}',
-                ),
-                pw.Bullet(
-                  text: 'Email: ${email.isEmpty ? 'email@example.com' : email}',
-                ),
-                if (location.isNotEmpty) pw.Bullet(text: 'Location: $location'),
-                if (id.isNotEmpty) pw.Bullet(text: 'ID: $id'),
-                pw.SizedBox(height: 8),
-                pw.Text(
-                  'Professional Summary',
-                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                ),
-                pw.Text(
-                  summary.isEmpty ? 'Short professional summary...' : summary,
-                ),
-                pw.SizedBox(height: 8),
-                pw.Text(
-                  'Skills',
-                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                ),
-                pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: skills.isEmpty
-                      ? [pw.Text('- Communication')]
-                      : skills.map((s) => pw.Text('- $s')).toList(),
-                ),
-                pw.SizedBox(height: 8),
-                pw.Text(
-                  'Experience',
-                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                ),
-                pw.Text(
-                  experience.isEmpty ? 'Jobs, duties, dates...' : experience,
-                ),
-                pw.SizedBox(height: 8),
-                pw.Text(
-                  'Education',
-                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                ),
-                pw.Text(
-                  education.isEmpty
-                      ? 'Qualifications & institutions...'
-                      : education,
-                ),
-              ],
-            );
-          },
+              ),
+              pw.Text(title.isEmpty ? 'Job Title' : title),
+              pw.SizedBox(height: 10),
+              pw.Text('Contact Information',
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+              pw.Bullet(text: 'Phone: $phone'),
+              pw.Bullet(text: 'Email: $email'),
+              if (location.isNotEmpty) pw.Bullet(text: 'Location: $location'),
+              if (id.isNotEmpty) pw.Bullet(text: 'ID: $id'),
+              pw.SizedBox(height: 10),
+              pw.Text('Summary',
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+              pw.Text(summary.isEmpty ? 'Short summary...' : summary),
+              pw.SizedBox(height: 10),
+              pw.Text('Skills',
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+              ...skills.map((s) => pw.Text('- $s')),
+              pw.SizedBox(height: 10),
+              pw.Text('Experience',
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+              pw.Text(experience.isEmpty ? 'Experience...' : experience),
+              pw.SizedBox(height: 10),
+              pw.Text('Education',
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+              pw.Text(education.isEmpty ? 'Education...' : education),
+            ],
+          ),
         ),
       );
-    } else {
-      // Modern template
-      final accentColor = PdfColor.fromInt(0xFF1E88E5); // blue accent
+    }
+
+    // Modern Template
+    else {
+      final accent = PdfColor.fromInt(0xFF1E88E5);
+
       doc.addPage(
         pw.MultiPage(
           pageFormat: PdfPageFormat.a4,
           margin: const pw.EdgeInsets.all(28),
-          build: (context) {
-            return [
-              pw.Container(
-                padding: const pw.EdgeInsets.only(bottom: 12),
-                decoration: pw.BoxDecoration(
-                  border: pw.Border(
-                    bottom: pw.BorderSide(width: 2, color: accentColor),
-                  ),
-                ),
-                child: pw.Row(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Expanded(
-                      child: pw.Column(
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
-                        children: [
-                          pw.Text(
-                            fullName.isEmpty ? 'Your Name' : fullName,
-                            style: pw.TextStyle(
-                              fontSize: 22,
-                              fontWeight: pw.FontWeight.bold,
-                              color: accentColor,
-                            ),
-                          ),
-                          pw.SizedBox(height: 4),
-                          pw.Text(
-                            title.isEmpty ? 'Job Title' : title,
-                            style: pw.TextStyle(fontSize: 12),
-                          ),
-                        ],
-                      ),
-                    ),
-                    pw.SizedBox(width: 10),
-                    pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.end,
-                      children: [
-                        pw.Text(phone.isEmpty ? '+27 00 000 0000' : phone),
-                        pw.Text(email.isEmpty ? 'email@example.com' : email),
-                        if (location.isNotEmpty) pw.Text(location),
-                      ],
-                    ),
-                  ],
+          build: (context) => [
+            pw.Container(
+              padding: const pw.EdgeInsets.only(bottom: 10),
+              decoration: pw.BoxDecoration(
+                border: pw.Border(
+                  bottom: pw.BorderSide(width: 2, color: accent),
                 ),
               ),
-              pw.SizedBox(height: 12),
-              pw.Row(
+              child: pw.Row(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
                   pw.Expanded(
-                    flex: 2,
                     child: pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
                         pw.Text(
-                          'Summary',
-                          style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                          fullName.isEmpty ? 'Your Name' : fullName,
+                          style: pw.TextStyle(
+                            fontSize: 22,
+                            fontWeight: pw.FontWeight.bold,
+                            color: accent,
+                          ),
                         ),
-                        pw.SizedBox(height: 6),
-                        pw.Text(
-                          summary.isEmpty
-                              ? 'Short professional summary...'
-                              : summary,
-                        ),
-                        pw.SizedBox(height: 12),
-                        pw.Text(
-                          'Experience',
-                          style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                        ),
-                        pw.SizedBox(height: 6),
-                        pw.Text(
-                          experience.isEmpty
-                              ? 'Jobs, duties, dates...'
-                              : experience,
-                        ),
-                        pw.SizedBox(height: 12),
-                        pw.Text(
-                          'Education',
-                          style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                        ),
-                        pw.SizedBox(height: 6),
-                        pw.Text(
-                          education.isEmpty
-                              ? 'Qualifications & institutions...'
-                              : education,
-                        ),
+                        pw.Text(title.isEmpty ? 'Job Title' : title),
                       ],
                     ),
                   ),
-                  pw.SizedBox(width: 12),
-                  pw.Expanded(
-                    flex: 1,
-                    child: pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.start,
-                      children: [
-                        pw.Container(
-                          padding: const pw.EdgeInsets.all(8),
-                          decoration: pw.BoxDecoration(
-                            border: pw.Border.all(color: accentColor),
-                          ),
-                          child: pw.Column(
-                            crossAxisAlignment: pw.CrossAxisAlignment.start,
-                            children: [
-                              pw.Text(
-                                'Skills',
-                                style: pw.TextStyle(
-                                  fontWeight: pw.FontWeight.bold,
-                                ),
-                              ),
-                              pw.SizedBox(height: 6),
-                              for (var s
-                                  in skills.isEmpty
-                                      ? ['Communication', 'Teamwork']
-                                      : skills)
-                                pw.Container(
-                                  margin: const pw.EdgeInsets.only(bottom: 4),
-                                  child: pw.Text('• $s'),
-                                ),
-                            ],
-                          ),
-                        ),
-                        pw.SizedBox(height: 12),
-                        if (id.isNotEmpty) pw.Text('ID: $id'),
-                      ],
-                    ),
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.end,
+                    children: [
+                      pw.Text(phone),
+                      pw.Text(email),
+                      if (location.isNotEmpty) pw.Text(location),
+                    ],
                   ),
                 ],
               ),
-            ];
-          },
+            ),
+            pw.SizedBox(height: 12),
+            pw.Text('Summary',
+                style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+            pw.Text(summary),
+            pw.SizedBox(height: 12),
+            pw.Text('Experience',
+                style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+            pw.Text(experience),
+            pw.SizedBox(height: 12),
+            pw.Text('Education',
+                style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+            pw.Text(education),
+            pw.SizedBox(height: 12),
+            pw.Text('Skills',
+                style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+            ...skills.map((s) => pw.Text('• $s')),
+            if (id.isNotEmpty) pw.SizedBox(height: 12),
+            if (id.isNotEmpty) pw.Text('ID: $id'),
+          ],
         ),
       );
     }
@@ -747,21 +590,15 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> {
   }
 
   // ---------------------------
-  // Export / Share / Save
+  // EXPORT / SHARE / SAVE
   // ---------------------------
   Future<void> _generatePdfAndShare() async {
-    // Validate required fields minimally
     if (_fullNameCtrl.text.trim().isEmpty ||
         _phoneCtrl.text.trim().isEmpty ||
         _emailCtrl.text.trim().isEmpty) {
-      // show a small validation tip
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Please fill required fields: Full name, Phone, Email.',
-          ),
-        ),
+        const SnackBar(content: Text('Fill Full Name, Phone, and Email')),
       );
       return;
     }
@@ -775,63 +612,53 @@ class _ResumeFormScreenState extends State<ResumeFormScreen> {
       final file = File('${dir.path}/$fileName');
       await file.writeAsBytes(bytes);
 
-      // Use share_plus to share
       if (kIsWeb) {
-        // For web: open print preview
         await Printing.layoutPdf(onLayout: (format) => bytes);
       } else {
-        await Share.shareXFiles([
-          XFile(file.path),
-        ], text: 'My Resume — generated with Resume Builder');
+        await Share.shareXFiles([XFile(file.path)],
+            text: 'Generated Resume PDF');
       }
-    } catch (e, st) {
+    } catch (e) {
       if (!mounted) return;
-      debugPrint('PDF generation error: $e\n$st');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Failed to generate PDF.')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('PDF error.')));
     }
   }
 
   Future<void> _saveLocally() async {
     if (!_formKey.currentState!.validate()) {
-      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fix validation errors first.')),
+        const SnackBar(content: Text('Fix validation errors first.')),
       );
       return;
     }
 
     setState(() => _saving = true);
+
     try {
       final doc = await _buildResumePdf();
       final bytes = await doc.save();
 
       final dir = await getApplicationDocumentsDirectory();
-      final fileName = _makeFileName();
-      final file = File('${dir.path}/$fileName');
+      final file = File('${dir.path}/${_makeFileName()}');
       await file.writeAsBytes(bytes);
 
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Saved to ${file.path}')));
-    } catch (e, st) {
-      debugPrint('Save error: $e\n$st');
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Failed to save file.')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Saved: ${file.path}')));
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Save failed.')));
     } finally {
-      if (mounted) setState(() => _saving = false);
+      setState(() => _saving = false);
     }
   }
 
   String _makeFileName() {
-    final namePart = _fullNameCtrl.text.trim().isEmpty
+    final name = _fullNameCtrl.text.trim().isEmpty
         ? 'resume'
-        : _fullNameCtrl.text.trim().replaceAll(RegExp(r'\s+'), '_');
-    final datePart = DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
-    return '${namePart}_$datePart_${_template.toLowerCase().replaceAll(' ', '_')}.pdf';
+        : _fullNameCtrl.text.trim().replaceAll(' ', '_');
+    final time = DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
+
+    return '${name}_$time.pdf';
   }
 }
